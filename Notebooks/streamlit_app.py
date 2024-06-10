@@ -74,14 +74,28 @@ average_fried_potato = round(df_selection['FriedPotato_Consumption'], 1)
 average_friedpotato_consumption = df['FriedPotato_Consumption'].apply(lambda x: ':🥔:' * int(round(x, 0)))
 
 
+
+PWHD = (df['Heart_Disease'] == 'Yes').sum()
+WWHD = ((df['Heart_Disease'] == 'Yes') & (df['Sex'] == 'Female')).sum()
+MWHD = ((df['Heart_Disease'] == 'Yes') & (df['Sex'] == 'Male')).sum()
 left_column, middle_column, right_column = st.columns(3)
+with left_column:
+    st.subheader('Personas con enfermedades del corazón:')
+    st.subheader(PWHD)
+
+with middle_column:
+    st.subheader('Mujeres con enfermedades del corazón:')
+    st.subheader(WWHD)
+
+with right_column:
+    st.subheader('Hombres con enfermedades del corazón:')
+    st.subheader(MWHD)
+
+st.markdown("---")
 
 
 
-
-
-
-
+# ------- RANGO DE EDADES CON ENFERMEDADES DEL CORAZON
 
 
 
