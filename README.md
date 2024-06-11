@@ -13,7 +13,11 @@ Probe los siguientes modelos de clasificación:
 - Gradient Boosting Clasiffier
 - K-Nearest Neighbors (KNN)
 
-Al utilizar la metrica de accuracy, me decante por quedarme con los siguientes modelos para realizar las predicciónes:
-- 
+Al utilizar la metrica de **accuracy** y **mean_squared_error**, me decante por quedarme con el modelo de **logistinc regression** me dio una **accuracy** de 0.9192339447313465 y un **mean_squared_error** de 0.08076605526865357.
+
+
+## Dashboard
+Para el dashboard utilice las librerias de **streamlit** y **plootly.express**.
+
 
 ## Conclusiones
