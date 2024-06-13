@@ -13,7 +13,7 @@ def load_data(path: str):
     data = pd.read_csv(path)
     return data
 
-df = load_data("Dataset\df_limpio.csv")
+df = load_data("Dataset/df_limpio.csv")
 with st.expander("Muestra de los datos"):
     st.dataframe(df)
 
@@ -86,22 +86,34 @@ Age_Category = st.sidebar.multiselect(
     default=df['Age_Category'].unique()
 )
 
-Height_cm = st.sidebar.multiselect(
+# Cambiar a st.slider para la altura en centímetros
+min_height = int(df['Height_(cm)'].min())
+max_height = int(df['Height_(cm)'].max())
+Height_cm = st.sidebar.slider(
     "Altura en centímetros:",
-    options=df['Height_(cm)'].unique(),
-    default=df['Height_(cm)'].unique()
+    min_value=min_height,
+    max_value=max_height,
+    value=(min_height, max_height)
 )
 
-Weight_kg = st.sidebar.multiselect(
+# Cambiar a st.slider para el peso en kilogramos
+min_weight = int(df['Weight_(kg)'].min())
+max_weight = int(df['Weight_(kg)'].max())
+Weight_kg = st.sidebar.slider(
     "Peso en kilogramos:",
-    options=df['Weight_(kg)'].unique(),
-    default=df['Weight_(kg)'].unique()
+    min_value=min_weight,
+    max_value=max_weight,
+    value=(min_weight, max_weight)
 )
 
-BMI = st.sidebar.multiselect(
+# Cambiar a st.slider para el índice de masa corporal
+min_bmi = int(df['BMI'].min())
+max_bmi = int(df['BMI'].max())
+BMI = st.sidebar.slider(
     "Índice de Masa Corporal:",
-    options=df['BMI'].unique(),
-    default=df['BMI'].unique()
+    min_value=min_bmi,
+    max_value=max_bmi,
+    value=(min_bmi, max_bmi)
 )
 
 # Usar DataFrame.eval para ejecutar la consulta de manera correcta
@@ -109,10 +121,13 @@ query_str = (
     f"General_Health == @General_Health and Checkup == @Checkup and Exercise == @Exercise and "
     f"Heart_Disease == @Heart_Disease and Skin_Cancer == @Skin_Cancer and Other_Cancer == @Other_Cancer and "
     f"Depression == @Depression and Diabetes == @Diabetes and Arthritis == @Arthritis and Sex == @Sex and "
-    f"Age_Category == @Age_Category and `Height_(cm)` == @Height_cm and `Weight_(kg)` == @Weight_kg and BMI == @BMI"
+    f"Age_Category == @Age_Category and `Height_(cm)` >= {Height_cm[0]} and `Height_(cm)` <= {Height_cm[1]} and "
+    f"`Weight_(kg)` >= {Weight_kg[0]} and `Weight_(kg)` <= {Weight_kg[1]} and `BMI` >= {BMI[0]} and `BMI` <= {BMI[1]}"
 )
 
 df_selection = df[df.eval(query_str)]
+
+
 
 # ------- PÁGINA PRINCIPAL
 st.title(':bar_chart: Gráficos')
@@ -141,32 +156,28 @@ with right_column:
 st.markdown("---")
 
 # ------- GRÁFICOS
-## ------- BAR CHART 
-### ------- ENFERMEDADES DEL CORAZON POR RANGO ETARIO
+## ------- BAR CHART
+## ------- ENFERMEDADES DEL CORAZON POR RANGO ETARIO
 heart_disease_per_age_category = (
     df_selection.groupby(by=['Age_Category']).sum(numeric_only=True)[['Heart_Disease']].sort_values(by='Heart_Disease')
 )
 
 fig_heart_disease_group = px.bar(
     heart_disease_per_age_category,
-    x = "Heart_Disease",
-    y = heart_disease_per_age_category.index,
-    orientation = 'h',
-    title ='<b>Heart Disease per Age Group</b>',
+    x="Heart_Disease",
+    y=heart_disease_per_age_category.index,
+    orientation='h',
+    title='<b>Heart Disease per Age Group</b>',
     color_discrete_sequence=['#0083B8'] * len(heart_disease_per_age_category),
-    template ='plotly_white',
+    template='plotly_white',
 )
 
 fig_heart_disease_group.update_layout(
-    plot_bgcolor = "rgba(0, 0, 0, 0)",
-    xaxis = (dict(showgrid = False))
+    plot_bgcolor="rgba(0, 0, 0, 0)",
+    xaxis=(dict(showgrid=False))
 )
 
-
 st.plotly_chart(fig_heart_disease_group)
-
-
-
 
 # ------- PIE CHART
 
@@ -182,26 +193,3 @@ fig_pie_chart_age_filtered = px.pie(
 
 # Mostrar el gráfico de pastel
 st.plotly_chart(fig_pie_chart_age_filtered)
-
-
-
-
-
-
-
-
-
-# HIDE STREAMLIT STYLE
-
-hide_st_sytle = """
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;
-    header {visibility: hidden;
-    </style>
-"""
-
-st.markdown(hide_st_sytle, unsafe_allow_html=True)
-
-
-

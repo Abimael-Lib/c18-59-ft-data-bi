@@ -13,7 +13,7 @@ def load_data(path: str):
     data = pd.read_csv(path)
     return data
 
-df = load_data("Dataset\df_limpio.csv")
+df = load_data("Dataset/df_limpio.csv")
 with st.expander("Muestra de los datos"):
     st.dataframe(df)
 
@@ -86,22 +86,34 @@ Age_Category = st.sidebar.multiselect(
     default=df['Age_Category'].unique()
 )
 
-Height_cm = st.sidebar.multiselect(
+# Cambiar a st.slider para la altura en centímetros
+min_height = int(df['Height_(cm)'].min())
+max_height = int(df['Height_(cm)'].max())
+Height_cm = st.sidebar.slider(
     "Altura en centímetros:",
-    options=df['Height_(cm)'].unique(),
-    default=df['Height_(cm)'].unique()
+    min_value=min_height,
+    max_value=max_height,
+    value=(min_height, max_height)
 )
 
-Weight_kg = st.sidebar.multiselect(
+# Cambiar a st.slider para el peso en kilogramos
+min_weight = int(df['Weight_(kg)'].min())
+max_weight = int(df['Weight_(kg)'].max())
+Weight_kg = st.sidebar.slider(
     "Peso en kilogramos:",
-    options=df['Weight_(kg)'].unique(),
-    default=df['Weight_(kg)'].unique()
+    min_value=min_weight,
+    max_value=max_weight,
+    value=(min_weight, max_weight)
 )
 
-BMI = st.sidebar.multiselect(
+# Cambiar a st.slider para el índice de masa corporal
+min_bmi = int(df['BMI'].min())
+max_bmi = int(df['BMI'].max())
+BMI = st.sidebar.slider(
     "Índice de Masa Corporal:",
-    options=df['BMI'].unique(),
-    default=df['BMI'].unique()
+    min_value=min_bmi,
+    max_value=max_bmi,
+    value=(min_bmi, max_bmi)
 )
 
 # Usar DataFrame.eval para ejecutar la consulta de manera correcta
@@ -109,11 +121,11 @@ query_str = (
     f"General_Health == @General_Health and Checkup == @Checkup and Exercise == @Exercise and "
     f"Heart_Disease == @Heart_Disease and Skin_Cancer == @Skin_Cancer and Other_Cancer == @Other_Cancer and "
     f"Depression == @Depression and Diabetes == @Diabetes and Arthritis == @Arthritis and Sex == @Sex and "
-    f"Age_Category == @Age_Category and `Height_(cm)` == @Height_cm and `Weight_(kg)` == @Weight_kg and BMI == @BMI"
+    f"Age_Category == @Age_Category and `Height_(cm)` >= {Height_cm[0]} and `Height_(cm)` <= {Height_cm[1]} and "
+    f"`Weight_(kg)` >= {Weight_kg[0]} and `Weight_(kg)` <= {Weight_kg[1]} and `BMI` >= {BMI[0]} and `BMI` <= {BMI[1]}"
 )
 
 df_selection = df[df.eval(query_str)]
-df_selection.reset_index(inplace=True)
 
 # ------- PÁGINA PRINCIPAL
 st.title(':bar_chart: Gráficos')
@@ -123,9 +135,9 @@ st.markdown('##')
 total_heart_disease = df['Heart_Disease'].sum()
 average_fried_potato = round(df_selection['FriedPotato_Consumption'].mean(), 1)
 
-PWHD = (df['Heart_Disease'] == 'Yes').sum()
-WWHD = ((df['Heart_Disease'] == 'Yes') & (df['Sex'] == 'Female')).sum()
-MWHD = ((df['Heart_Disease'] == 'Yes') & (df['Sex'] == 'Male')).sum()
+PWHD = (df['Heart_Disease'] == 1).sum()
+WWHD = ((df['Heart_Disease'] == 1) & (df['Sex'] == 0)).sum()
+MWHD = ((df['Heart_Disease'] == 1) & (df['Sex'] == 1)).sum()
 left_column, middle_column, right_column = st.columns(3)
 with left_column:
     st.subheader('Personas con enfermedades del corazón:')
@@ -142,7 +154,8 @@ with right_column:
 st.markdown("---")
 
 # ------- GRÁFICOS
-## ------- RANGO DE EDADES CON ENFERMEDADES DEL CORAZÓN
+## ------- BAR CHART 
+### ------- ENFERMEDADES DEL CORAZON POR RANGO ETARIO
 heart_disease_per_age_category = (
     df_selection.groupby(by=['Age_Category']).sum(numeric_only=True)[['Heart_Disease']].sort_values(by='Heart_Disease')
 )
@@ -157,4 +170,24 @@ fig_heart_disease_group = px.bar(
     template='plotly_white',
 )
 
+fig_heart_disease_group.update_layout(
+    plot_bgcolor="rgba(0, 0, 0, 0)",
+    xaxis=(dict(showgrid=False))
+)
+
 st.plotly_chart(fig_heart_disease_group)
+
+# ------- PIE CHART
+
+# Contar la cantidad de personas en cada categoría de edad después de aplicar los filtros
+age_category_counts_filtered = df_selection['Age_Category'].value_counts()
+
+# Crear el gráfico de pastel
+fig_pie_chart_age_filtered = px.pie(
+    values=age_category_counts_filtered.values,
+    names=age_category_counts_filtered.index,
+    title='Distribución por categoría de edad (Filtrada)',
+)
+
+# Mostrar el gráfico de pastel
+st.plotly_chart(fig_pie_chart_age_filtered)
