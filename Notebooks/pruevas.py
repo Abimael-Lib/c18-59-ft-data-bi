@@ -2,20 +2,47 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+# Configurar la página
 st.set_page_config(
     page_title='Probabilidad de padecer enfermedades del corazón',
     page_icon=":bar_chart:",
     layout="wide"
 )
 
+# Función para cargar datos
 @st.cache_data
 def load_data(path: str):
     data = pd.read_csv(path)
     return data
 
+# Cargar datos
 df = load_data("Dataset/df_limpio.csv")
 with st.expander("Muestra de los datos"):
     st.dataframe(df)
+
+# Insertar CSS personalizado
+st.markdown("""
+    <style>
+    /* Cambiar el fondo de la barra lateral */
+    .css-1d391kg { 
+        background-color: #f5f5f5; 
+    }
+    /* Cambiar el color del texto de los widgets */
+    .css-16huue1, .css-1avcm0n, .css-10trblm {
+        color: #22577a; 
+    }
+    /* Cambiar el color de fondo de los widgets */
+    .stSelectbox, .stSlider, .stMultiSelect {
+        background-color: #e8f0fe;
+        border-color: #22577a;
+    }
+    /* Cambiar el color del botón de selección */
+    .st-bu {
+        color: #ffffff;
+        background-color: #22577a;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # ------- Sidebar
 st.sidebar.header("Selección de filtros:")
@@ -127,8 +154,6 @@ query_str = (
 
 df_selection = df[df.eval(query_str)]
 
-
-
 # ------- PÁGINA PRINCIPAL
 st.title(':bar_chart: Gráficos')
 st.markdown('##')
@@ -155,7 +180,9 @@ with right_column:
 
 st.markdown("---")
 
-# ------- GRÁFICOS
+# --------------------- GRÁFICOS
+custom_colors = ['#22577a', '#38a3a5', '#57cc99', '#80ed99', '#c7f9cc']
+
 ## ------- BAR CHART
 ## ------- ENFERMEDADES DEL CORAZON POR RANGO ETARIO
 heart_disease_per_age_category = (
@@ -168,7 +195,7 @@ fig_heart_disease_group = px.bar(
     y=heart_disease_per_age_category.index,
     orientation='h',
     title='<b>Heart Disease per Age Group</b>',
-    color_discrete_sequence=['#0083B8'] * len(heart_disease_per_age_category),
+    color_discrete_sequence=[custom_colors[0]] * len(heart_disease_per_age_category),
     template='plotly_white',
 )
 
@@ -180,7 +207,6 @@ fig_heart_disease_group.update_layout(
 st.plotly_chart(fig_heart_disease_group)
 
 # ------- PIE CHART
-
 # Contar la cantidad de personas en cada categoría de edad después de aplicar los filtros
 age_category_counts_filtered = df_selection['Age_Category'].value_counts()
 
@@ -189,7 +215,35 @@ fig_pie_chart_age_filtered = px.pie(
     values=age_category_counts_filtered.values,
     names=age_category_counts_filtered.index,
     title='Distribución por categoría de edad (Filtrada)',
+    color_discrete_sequence=custom_colors
 )
 
 # Mostrar el gráfico de pastel
 st.plotly_chart(fig_pie_chart_age_filtered)
+
+# ------- STACKED BAR CHART
+## ------- DISTRIBUCIÓN DE CONDICIONES DE SALUD POR RANGO ETARIO
+health_conditions = ['Heart_Disease', 'Diabetes', 'Depression', 'Arthritis']
+df_health_conditions = df_selection.groupby('Age_Category')[health_conditions].sum().reset_index()
+
+fig_stacked_bar = px.bar(
+    df_health_conditions,
+    x='Age_Category',
+    y=health_conditions,
+    title='<b>Distribución de condiciones de salud por rango etario</b>',
+    labels={'value': 'Cantidad', 'Age_Category': 'Rango Etario'},
+    template='plotly_white',
+    color_discrete_map={
+        'Heart_Disease': custom_colors[0],
+        'Diabetes': custom_colors[1],
+        'Depression': custom_colors[2],
+        'Arthritis': custom_colors[3]
+    }
+)
+
+fig_stacked_bar.update_layout(
+    barmode='stack',
+    xaxis=dict(tickmode='linear')
+)
+
+st.plotly_chart(fig_stacked_bar)
